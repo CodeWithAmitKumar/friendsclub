@@ -426,6 +426,30 @@ footer{border-top:1px solid var(--rule);background:var(--paper-2);margin-top:0}
   font-weight:500;letter-spacing:.08em;color:var(--ink-2);opacity:.6;
   margin-left:6px;text-transform:none;font-size:11px;
 }
+/* Referral live-check status under the referral input */
+.ref-status{
+  min-height:16px;margin-top:6px;font-size:12.5px;line-height:1.4;color:var(--ink-2);
+  display:flex;align-items:center;gap:8px;
+}
+.ref-status.loading{color:var(--ink-3)}
+.ref-status.loading::before{
+  content:"";width:12px;height:12px;border-radius:50%;
+  border:1.5px solid rgba(26,21,17,.2);border-top-color:var(--brand);
+  animation:refspin .7s linear infinite;
+}
+.ref-status.good{color:var(--forest)}
+.ref-status.good::before{
+  content:"";width:18px;height:18px;border-radius:999px;background:var(--forest);color:#f1ebda;
+  display:inline-grid;place-items:center;font-size:11px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f1ebda' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m4 12 6 6 10-14'/></svg>");
+  background-size:12px 12px;background-repeat:no-repeat;background-position:center;
+}
+.ref-status.bad{color:var(--brand-ink)}
+.ref-status.bad::before{
+  content:"!";width:18px;height:18px;border-radius:999px;background:var(--brand);color:#fff;
+  display:inline-grid;place-items:center;font-size:12px;font-weight:700;
+}
+@keyframes refspin{to{transform:rotate(360deg)}}
 .field{
   display:flex;align-items:center;gap:0;
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--r-sm);

@@ -1,17 +1,51 @@
 <?php
 $title = 'Login — Friends Club';
+require_once __DIR__ . '/config.php';
+session_start();
+
+// Already logged in? Jump to dashboard.
+if (!empty($_SESSION['member_id'])) {
+  header('Location: member/dashboard.php');
+  exit;
+}
 
 $err = '';
-$ok  = false;
-$in  = ['userid' => '', 'password' => ''];
+$in  = ['userid' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $in['userid']   = trim($_POST['userid']   ?? '');
-  $in['password'] = trim($_POST['password'] ?? '');
+  $in['userid'] = trim($_POST['userid']  ?? '');
+  $password     = $_POST['password']     ?? '';
+  $remember     = !empty($_POST['remember']);
 
-  if ($in['userid'] === '')               $err = 'Please enter your User ID.';
-  elseif ($in['password'] === '')         $err = 'Please enter your password.';
-  else                                    $ok  = true;
+  if ($in['userid'] === '' || $password === '') {
+    $err = 'Please enter both your User ID and password.';
+  } else {
+    $s = mysqli_prepare($conn, 'SELECT id, user_id, name, email, password, status FROM members WHERE user_id = ? OR email = ? LIMIT 1');
+    $u = strtoupper($in['userid']); // allow lowercase typing of FC prefix
+    mysqli_stmt_bind_param($s, 'ss', $u, $in['userid']);
+    mysqli_stmt_execute($s);
+    $m = mysqli_fetch_assoc(mysqli_stmt_get_result($s));
+
+    if (!$m) {
+      $err = 'No member account found with that User ID or email.';
+    } elseif ($m['status'] !== 'active') {
+      $err = 'Your account is inactive. Please contact support.';
+    } elseif (!password_verify($password, $m['password'])) {
+      $err = 'The password doesn\'t match our records.';
+    } else {
+      // Success
+      $_SESSION['member_id']      = (int)$m['id'];
+      $_SESSION['member_user_id'] = $m['user_id'];
+      $_SESSION['member_name']    = $m['name'];
+      if ($remember) {
+        // Extend session cookie to 30 days
+        $p = session_get_cookie_params();
+        setcookie(session_name(), session_id(), time() + 60*60*24*30, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+      }
+      header('Location: member/dashboard.php');
+      exit;
+    }
+  }
 }
 
 include __DIR__ . '/_header.php';
@@ -30,9 +64,7 @@ include __DIR__ . '/_header.php';
         </div>
         <h2>Welcome back</h2>
 
-        <?php if ($ok): ?>
-          <div class="notice ok">Signed in as <?= htmlspecialchars($in['userid']) ?>.</div>
-        <?php elseif ($err): ?>
+        <?php if ($err): ?>
           <div class="notice err"><?= htmlspecialchars($err) ?></div>
         <?php endif; ?>
 
